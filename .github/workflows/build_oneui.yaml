@@ -1,0 +1,41 @@
+name: Build Kernel for A51 (OneUI)
+
+on:
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout kernel source
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y bash git make libssl-dev curl bc pkg-config m4 libtool automake autoconf python3
+
+    - name: Install WeebX Clang to toolchain/
+      run: |
+        wget "$(curl -s https://raw.githubusercontent.com/XSans0/WeebX-Clang/main/main/link.txt)" -O weebx-clang.tar.gz
+        rm -rf toolchain && mkdir toolchain
+        tar -xvf weebx-clang.tar.gz -C toolchain
+        rm -f weebx-clang.tar.gz
+
+    - name: Set up toolchain environment
+      run: |
+        echo "$GITHUB_WORKSPACE/toolchain/bin" >> $GITHUB_PATH
+        echo "CLANG_PATH=$GITHUB_WORKSPACE/toolchain" >> $GITHUB_ENV
+
+    - name: Build OneUI kernel
+      run: |
+        python3 build_kernel.py --target=a51 --allow-dirty --oneui
+
+    - name: Upload compiled kernel ZIP
+      uses: actions/upload-artifact@v4
+      with:
+        name: GrassKernel-A51-OneUI
+        path: GrassKernel_*.zip
+
+  
