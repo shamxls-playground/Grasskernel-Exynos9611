@@ -14,8 +14,6 @@
   <a href="#how-to-build">How To Build</a> •
   <a href="#how-to-flash">How To Flash</a> •
   <a href="#credits">Credits</a>
-•
-  <a href="#downloads">Download</a>
 </p>
 
 ## Key Features
@@ -67,11 +65,6 @@ This is your kernel. Just flash it via TWRP or adb sideload
 - [Android Open Source Project](https://source.android.com/)
 - [The Linux Kernel](https://www.kernel.org/)
 
+# Note
 
-# Downloads
-[![Kernel for A51 (AOSP)](https://github.com/shamxl/kernel_samsung_universal9611/actions/workflows/build.yaml/badge.svg)](https://github.com/shamxl/kernel_samsung_universal9611/actions/workflows/build.yaml)
-[![Build Kernel for A51 (OneUI)](https://github.com/shamxl/kernel_samsung_universal9611/actions/workflows/build_oneui.yaml/badge.svg)](https://github.com/shamxl/kernel_samsung_universal9611/actions/workflows/build_oneui.yaml)
-
-Prebuilt kernels can be downloaded from the lastest workflow run
-
-_⚠️ the flashable zip is inside the zip file, unzip the downloaded file before flashing._
+⚠️ This project is under testing
