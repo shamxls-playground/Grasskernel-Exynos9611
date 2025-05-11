@@ -29,9 +29,11 @@ def popen_impl(command: list[str]):
         if debug_popen_impl:
             print('failed')
         write_logs(out, err)
+        print (err)
         raise RuntimeError(f"Command failed: {command}. Exitcode: {s.returncode}")
     if debug_popen_impl:
         print(f'result: {s.returncode == 0}')
+        print (err)
         write_logs(out, err)
 
 def check_file(filename):
