@@ -9,10 +9,10 @@ on:
         required: false
         type: string
         default: ubuntu-latest
-      pack_lkm:
-        required: false
-        type: boolean
-        default: true
+      # pack_lkm:
+      #   required: false
+      #   type: boolean
+      #   default: true
       use_cache:
         required: false
         type: boolean
@@ -21,37 +21,59 @@ jobs:
   build:
     runs-on: ${{ inputs.os }}
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout Repository
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
-    - name: Download artifacts
+    - name: Download Artifacts
       uses: actions/download-artifact@v4
-    
-    - name: Prepare LKM fies
-      if: ${{ inputs.pack_lkm }}
+
+    # - name: Prepare LKM Files
+    #   if: ${{ inputs.pack_lkm }}
+    #   run: |
+    #     cp android*-lkm/*_kernelsu.ko ./userspace/ksud_overlayfs/bin/aarch64/
+    #     cp android*-lkm/*_kernelsu.ko ./userspace/ksud_magic/bin/aarch64/ // DISBAND LKM MODE
+
+    - name: Import susfsd Libraries
       run: |
-        cp android*-lkm/*_kernelsu.ko ./userspace/ksud/bin/aarch64/
-        
-    - name: Setup rustup
+        cp susfsd-aarch64-linux-android/arm64-v8a/susfsd ./userspace/ksud_overlayfs/bin/aarch64/
+        cp susfsd-aarch64-linux-android/arm64-v8a/susfsd ./userspace/ksud_magic/bin/aarch64/
+
+    - name: Setup Rust
       run: |
         rustup update stable
-        rustup target add x86_64-apple-darwin
         rustup target add aarch64-apple-darwin
-    - uses: Swatinem/rust-cache@v2
+
+    - name: Cache ksud_overlayfs
+      uses: Swatinem/rust-cache@v2
       with:
-        workspaces: userspace/ksud
+        workspaces: userspace/ksud_overlayfs
         cache-targets: false
 
-    - name: Install cross
+    - name: Cache ksud_magic
+      uses: Swatinem/rust-cache@v2
+      with:
+        workspaces: userspace/ksud_magic
+        cache-targets: false
+
+    - name: Setup Cross
       run: |
-        cargo install cross --git https://github.com/cross-rs/cross --rev 66845c1
+        RUSTFLAGS="" cargo install cross --git https://github.com/cross-rs/cross --rev 66845c1 --force
 
     - name: Build ksud
-      run: CROSS_NO_WARNINGS=0 cross build --target ${{ inputs.target }} --release --manifest-path ./userspace/ksud/Cargo.toml
+      run: |
+        CROSS_NO_WARNINGS=0 cross build --target ${{ inputs.target }} --release --manifest-path ./userspace/ksud_overlayfs/Cargo.toml
+        CROSS_NO_WARNINGS=0 cross build --target ${{ inputs.target }} --release --manifest-path ./userspace/ksud_magic/Cargo.toml
 
-    - name: Upload ksud artifact
+    - name: Upload ksud_overlayfs artifact
       uses: actions/upload-artifact@v4
       with:
-        name: ksud-${{ inputs.target }}
-        path: userspace/ksud/target/**/release/ksud*
+        name: ksud_overlayfs-${{ inputs.target }}
+        path: userspace/ksud_overlayfs/target/**/release/ksud*
+
+    - name: Upload ksud_magic artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ksud_magic-${{ inputs.target }}
+        path: userspace/ksud_magic/target/**/release/ksud*

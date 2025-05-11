@@ -1,8 +1,12 @@
+@file:Suppress("UnstableApiUsage")
+
 import com.android.build.gradle.internal.api.BaseVariantOutputImpl
+import com.android.build.gradle.tasks.PackageAndroidArtifact
 
 plugins {
     alias(libs.plugins.agp.app)
     alias(libs.plugins.kotlin)
+    alias(libs.plugins.compose.compiler)
     alias(libs.plugins.ksp)
     alias(libs.plugins.lsplugin.apksign)
     id("kotlin-parcelize")
@@ -19,7 +23,7 @@ apksign {
 }
 
 android {
-    namespace = "me.weishu.kernelsu"
+    namespace = "com.rifsxd.ksunext"
 
     buildTypes {
         release {
@@ -33,14 +37,11 @@ android {
         aidl = true
         buildConfig = true
         compose = true
+        prefab = true
     }
 
     kotlinOptions {
         jvmTarget = "21"
-    }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
     }
 
     packaging {
@@ -48,7 +49,13 @@ android {
             useLegacyPackaging = true
         }
         resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            // https://stackoverflow.com/a/58956288
+            // It will break Layout Inspector, but it's unused for release build.
+            excludes += "META-INF/*.version"
+            // https://github.com/Kotlin/kotlinx.coroutines?tab=readme-ov-file#avoiding-including-the-debug-infrastructure-in-the-resulting-apk
+            excludes += "DebugProbesKt.bin"
+            // https://issueantenna.com/repo/kotlin/kotlinx.coroutines/issues/3158
+            excludes += "kotlin-tooling-metadata.json"
         }
     }
 
@@ -61,14 +68,27 @@ android {
     applicationVariants.all {
         outputs.forEach {
             val output = it as BaseVariantOutputImpl
-            output.outputFileName = "KernelSU_${managerVersionName}_${managerVersionCode}-$name.apk"
+            output.outputFileName = "KernelSU_Next_${managerVersionName}_${managerVersionCode}-$name.apk"
         }
-
         kotlin.sourceSets {
             getByName(name) {
                 kotlin.srcDir("build/generated/ksp/$name/kotlin")
             }
         }
+    }
+
+    // https://stackoverflow.com/a/77745844
+    tasks.withType<PackageAndroidArtifact> {
+        doFirst { appMetadata.asFile.orNull?.writeText("") }
+    }
+
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+
+    androidResources {
+        generateLocaleConfig = true
     }
 }
 
@@ -90,12 +110,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 
-    implementation(libs.com.google.accompanist.drawablepainter)
-    implementation(libs.com.google.accompanist.navigation.animation)
-    implementation(libs.com.google.accompanist.systemuicontroller)
-    implementation(libs.com.google.accompanist.webview)
-
-    implementation(libs.compose.destinations.animations.core)
+    implementation(libs.compose.destinations.core)
     ksp(libs.compose.destinations.ksp)
 
     implementation(libs.com.github.topjohnwu.libsu.core)
@@ -116,4 +131,11 @@ dependencies {
 
     implementation(libs.markdown)
     implementation(libs.androidx.webkit)
+
+    implementation(libs.lsposed.cxx)
+
+    implementation(libs.mmrl.platform)
+    compileOnly(libs.mmrl.hidden.api)
+    implementation(libs.mmrl.ui)
+    implementation(libs.mmrl.webui)
 }
