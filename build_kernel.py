@@ -7,7 +7,7 @@ import time
 from datetime import datetime
 import zipfile
 
-debug_popen_impl = False
+debug_popen_impl = True
 
 def popen_impl(command: list[str]):
     if debug_popen_impl:
